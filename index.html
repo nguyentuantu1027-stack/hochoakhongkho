@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧪 Học Hóa cùng tớ nhé </title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Arial, sans-serif; }
+  body {
+    min-height:100vh;
+    background: linear-gradient(135deg, #1a2a6c, #2a4d8f, #0f3460);
+    display:flex; justify-content:center; align-items:center;
+    color:#fff; padding:16px;
+  }
+  .game-container {
+    width:100%; max-width:680px;
+    background: rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.15);
+    border-radius:20px; padding:28px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+  .score-box {
+    position:fixed; top:16px; right:16px;
+    background: rgba(0,0,0,0.5); padding:10px 20px; border-radius:30px;
+    font-size:18px; font-weight:bold; border:2px solid #4fd1c5; z-index:100;
+  }
+  .round-box {
+    position:fixed; top:16px; left:16px;
+    background: rgba(0,0,0,0.5); padding:10px 20px; border-radius:30px;
+    font-size:15px; font-weight:bold; border:2px solid #f6e05e; z-index:100;
+  }
+  .score-box.bump-up { animation:bumpUp 0.4s; border-color:#48bb78; }
+  .score-box.bump-down { animation:bumpDown 0.4s; border-color:#fc8181; }
+  @keyframes bumpUp { 0%{transform:scale(1)} 50%{transform:scale(1.25); background:rgba(72,187,120,0.4)} 100%{transform:scale(1)} }
+  @keyframes bumpDown { 0%{transform:scale(1)} 50%{transform:scale(1.25); background:rgba(252,129,129,0.4)} 100%{transform:scale(1)} }
+
+  .progress-bar { display:flex; gap:8px; margin-bottom:16px; }
+  .step {
+    flex:1; padding:8px 2px; text-align:center;
+    background:rgba(255,255,255,0.1); border-radius:10px;
+    font-size:11px; opacity:0.4; transition:all 0.3s; border:2px solid transparent;
+  }
+  .step.active { opacity:1; background:rgba(79,209,197,0.25); border-color:#4fd1c5; font-weight:bold; }
+  .step.done { opacity:0.8; background:rgba(72,187,120,0.25); }
+
+  h1 { text-align:center; font-size:30px; margin-bottom:6px; }
+  h1 .flask { display:inline-block; animation:shake 2s infinite; }
+  @keyframes shake { 0%,100%{transform:rotate(0)} 20%{transform:rotate(15deg)} 40%{transform:rotate(-10deg)} 60%{transform:rotate(5deg)} }
+  .subtitle { text-align:center; color:#4fd1c5; margin-bottom:20px; }
+
+  .screen { display:none; }
+  .screen.visible { display:block; animation:fadeIn 0.5s; }
+  @keyframes fadeIn { from{opacity:0; transform:translateY(15px)} to{opacity:1; transform:translateY(0)} }
+
+  .rules { background:rgba(0,0,0,0.25); border-radius:14px; padding:18px; margin-bottom:20px; font-size:15px; line-height:1.7; }
+  .rules b { color:#4fd1c5; }
+
+  .btn {
+    display:block; width:100%; padding:15px; font-size:18px; font-weight:bold; color:#fff;
+    background:linear-gradient(90deg,#4fd1c5,#38b2ac);
+    border:none; border-radius:12px; cursor:pointer;
+    transition:transform 0.15s, box-shadow 0.15s;
+  }
+  .btn:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(79,209,197,0.4); }
+
+  .question-step { color:#f6e05e; font-weight:bold; font-size:14px; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+  .question-text { font-size:19px; line-height:1.6; margin-bottom:12px; }
+  .riddle {
+    background:rgba(246,224,94,0.1); border-left:4px solid #f6e05e;
+    padding:12px 16px; border-radius:8px; margin-bottom:16px; line-height:2;
+  }
+  .equation {
+    background:rgba(79,209,197,0.1); border:1px solid rgba(79,209,197,0.4);
+    padding:14px; border-radius:10px; text-align:center;
+    font-size:20px; margin-bottom:16px; letter-spacing:1px; color:#b2f5ea;
+  }
+  .coef-row { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:8px; margin-bottom:16px; font-size:20px; }
+  .coef-input {
+    width:56px; padding:10px 4px; text-align:center; font-size:19px; font-weight:bold;
+    background:rgba(255,255,255,0.15); border:2px solid #f6e05e; border-radius:10px;
+    color:#fff; outline:none;
+  }
+  .coef-input:focus { border-color:#4fd1c5; }
+  .coef-arrow { color:#4fd1c5; font-weight:bold; }
+
+  .feedback { text-align:center; font-weight:bold; font-size:17px; min-height:26px; margin-bottom:12px; }
+  .feedback.correct { color:#68d391; }
+  .feedback.wrong { color:#fc8181; }
+  .shake { animation:shakeX 0.4s; }
+  @keyframes shakeX { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+
+  .input-row { display:flex; gap:10px; margin-bottom:6px; }
+  input[type=text] {
+    flex:1; padding:14px; font-size:17px;
+    background:rgba(255,255,255,0.12); border:2px solid rgba(255,255,255,0.25);
+    border-radius:12px; color:#fff; outline:none;
+  }
+  input[type=text]:focus { border-color:#4fd1c5; }
+  input::placeholder { color:rgba(255,255,255,0.4); }
+  .input-row .btn { width:auto; padding:14px 26px; }
+
+  .big-score { text-align:center; font-size:64px; font-weight:bold; color:#4fd1c5; margin:14px 0; }
+  .final-message { text-align:center; font-size:18px; margin-bottom:20px; }
+  .answer-reveal {
+    background:rgba(72,187,120,0.15); border-radius:10px; padding:14px;
+    margin-bottom:20px; font-size:15px; color:#c6f6d5; line-height:2; max-height:280px; overflow-y:auto;
+  }
+</style>
+</head>
+<body>
+
+<div class="round-box" id="roundBox">📋 Câu 0/10</div>
+<div class="score-box" id="scoreBox">⭐ <span id="score">0</span>/40</div>
+
+<div class="game-container">
+  <div class="progress-bar" id="progressBar">
+    <div class="step" data-step="0">🧪 Chất</div>
+    <div class="step" data-step="1">⚛️ Nguyên tố</div>
+    <div class="step" data-step="2">⚗️ Phản ứng</div>
+    <div class="step" data-step="3">⚖️ Cân bằng</div>
+  </div>
+
+  <!-- TRANG CHỦ -->
+  <div class="screen visible" id="homeScreen">
+    <h1><span class="flask">🧪</span> HÓA HỌC KHÔNG KHÓ</h1>
+    <p class="subtitle">Game đố vui Hóa học lớp 8–9 • 10 câu • Tối đa 40 điểm</p>
+    <div class="rules">
+      🎯 <b>Mục tiêu:</b> Hoàn thành 10 câu hỏi, mỗi câu gồm 4 bước liên tiếp.<br><br>
+      🎮 <b>Luật chơi:</b><br>
+      • <b>Bước 1 🧪:</b> Đọc manh mối, đoán tên chất<br>
+      • <b>Bước 2 ⚛️:</b> Đoán nguyên tố tạo thành chất<br>
+      • <b>Bước 3 ⚗️:</b> Đoán sản phẩm của phản ứng<br>
+      • <b>Bước 4 ⚖️:</b> Nhập hệ số để cân bằng PTHH<br><br>
+      ✅ Đúng: <b style="color:#68d391">+1 điểm</b>, chuyển bước tiếp<br>
+      ❌ Sai: <b style="color:#fc8181">−1 điểm</b>, làm lại (không giới hạn)<br>
+      🔀 10 chất được chọn <b>ngẫu nhiên</b> từ ngân hàng 20 chất
+    </div>
+    <button class="btn" onclick="startGame()">▶ BẮT ĐẦU</button>
+  </div>
+
+  <!-- MÀN CHƠI -->
+  <div class="screen" id="quizScreen">
+    <p class="question-step" id="stepLabel"></p>
+    <p class="question-text" id="questionText"></p>
+    <div id="dynamicArea"></div>
+    <p class="feedback" id="feedback"></p>
+    <div class="input-row" id="inputRow">
+      <input type="text" id="answerInput" placeholder="Nhập đáp án..." autocomplete="off" onkeydown="if(event.key==='Enter') submitAnswer()">
+      <button class="btn" onclick="submitAnswer()">TRẢ LỜI</button>
+    </div>
+    <div id="coefRow"></div>
+  </div>
+
+  <!-- KẾT THÚC -->
+  <div class="screen" id="endScreen">
+    <h1>🏆 Hoàn thành!</h1>
+    <p class="final-message" id="finalMessage"></p>
+    <div class="big-score" id="finalScore"></div>
+    <div class="answer-reveal" id="answerReveal"></div>
+    <button class="btn" onclick="startGame()">🔄 CHƠI LẠI</button>
+  </div>
+</div>
+
+<script>
+// ================= NGÂN HÀNG 20 CHẤT =================
+const BANK = [
+  { id:"o2",
+    riddle:["Tôi là một chất khí.","Tôi duy trì sự cháy.","Tôi cần thiết cho hô hấp."],
+    answers:["o2","oxi"],
+    elementQ:"O₂ được tạo thành từ nguyên tố nào?",
+    elementAns:["oxi"],
+    reactants:["C","O₂"], products:["CO₂"],
+    productAns:["co2"],
+    coefs:[1,1,1] },
+  { id:"h2",
+    riddle:["Tôi là chất khí nhẹ nhất trong mọi chất khí.","Tôi dễ cháy trong không khí.","Tôi được dùng bơm bóng bay và làm nhiên liệu tên lửa."],
+    answers:["h2","hidro","hydrogen"],
+    elementQ:"H₂ được tạo thành từ nguyên tố nào?",
+    elementAns:["hidro","hydrogen","h"],
+    reactants:["H₂","O₂"], products:["H₂O"],
+    productAns:["h2o","nuoc","nước"],
+    coefs:[2,1,2] },
+  { id:"co2",
+    riddle:["Tôi là chất khí không màu.","Tôi làm đục nước vôi trong.","Tôi có trong thức uống có ga."],
+    answers:["co2","cacbon dioxit","cacbonic"],
+    elementQ:"CO₂ được tạo thành từ hai nguyên tố C và O. Nguyên tố nào chiếm khối lượng lớn hơn?",
+    elementAns:["cacbon","carbon","c"],
+    reactants:["CO₂","H₂O"], products:["H₂CO₃"],
+    productAns:["h2co3","axit cacbonic"],
+    coefs:[1,1,1] },
+  { id:"h2o",
+    riddle:["Tôi là chất lỏng không màu, không mùi.","Tôi chiếm khoảng 70% cơ thể ngườơi.",
+     "Tôi sôi ở 100°C."],
+    answers:["h2o","nuoc","nước"],
+    elementQ:"H₂O được tạo thành từ hai nguyên tố: H và O. Nguyên tố nào có số hiệu nguyên tử lớn hơn?",
+    elementAns:["oxi","o"],
+    reactants:["H₂O"], products:["H₂","O₂"],
+    productAns:["h2 va o2","h2 & o2","h2, o2","h2 + o2","hidro va oxi"],
+    coefs:[2,2,1] },
+  { id:"fe",
+    riddle:["Tôi là kim loại màu xám trắng.","Tôi bị gỉ khi để lâu trong không khí ẩm.","Tôi được dùng làm thép, xây dựng."],
+    answers:["fe","sat","sắt"],
+    elementQ:"Fe là ký hiệu hóa học của nguyên tố nào?",
+    elementAns:["sat","sắt","iron"],
+    reactants:["Fe","O₂"], products:["Fe₃O₄"],
+    productAns:["fe3o4","fe₃o₄","oxit sat tu"],
+    coefs:[3,2,1] },
+  { id:"cu",
+    riddle:["Tôi là kim loại màu đỏ.","Tôi dẫn điện tốt, đứng sau bạc.","Tôi được dùng làm dây điện."],
+    answers:["cu","dong","đồng","copper"],
+    elementQ:"Cu là ký hiệu hóa học của nguyên tố nào?",
+    elementAns:["dong","đồng","copper"],
+    reactants:["Cu","O₂"], products:["CuO"],
+    productAns:["cuo","oxit dong"],
+    coefs:[2,1,2] },
+  { id:"zn",
+    riddle:["Tôi là kim loại màu xanh xám.","Tôi tan mạnh trong dung dịch axit, giải phóng khí.","Vỏ pin thường có tôi."],
+    answers:["zn","kem","kẽm","zinc"],
+    elementQ:"Zn là ký hiệu hóa học của nguyên tố nào?",
+    elementAns:["kem","kẽm","zinc"],
+    reactants:["Zn","HCl"], products:["ZnCl₂","H₂"],
+    productAns:["zncl2 va h2","zncl2 & h2","zncl2, h2","zncl2 + h2"],
+    coefs:[1,2,1,1] },
+  { id:"al",
+    riddle:["Tôi là kim loại nhẹ, màu trắng bạc.","Tôi dùng làm khung máy bay, cửa sổ.","Lớp oxit của tôi bảo vệ tôi khỏi gỉ."],
+    answers:["al","nhom","nhôm","aluminium","aluminum"],
+    elementQ:"Al là ký hiệu hóa học của nguyên tố nào?",
+    elementAns:["nhom","nhôm","aluminium","aluminum"],
+    reactants:["Al","O₂"], products:["Al₂O₃"],
+    productAns:["al2o3","al₂o₃","oxit nhom"],
+    coefs:[4,3,2] },
+  { id:"hcl",
+    riddle:["Tôi là axit có trong dạ dày.","Dung dịch của tôi làm quỳ tím hóa đỏ.","Tôi có mùi xốc, tan trong nước."],
+    answers:["hcl","axit clohidric"],
+    elementQ:"Trong HCl, nguyên tố nào là kim loại hidro hay phi kim clo? Ghi tên nguyên tố phi kim trong HCl.",
+    elementAns:["clo","clor","chlorine"],
+    reactants:["HCl","NaOH"], products:["NaCl","H₂O"],
+    productAns:["nacl va h2o","nacl & h2o","nacl, h2o","nacl + h2o"],
+    coefs:[1,1,1,1] },
+  { id:"h2so4",
+    riddle:["Tôi là axit mạnh nhất phổ biến.","Dung dịch của tôi hút nước mạnh.","Pin ô tô, ắc quy có tôi."],
+    answers:["h2so4","axit sunfuric"],
+    elementQ:"H₂SO₄ được tạo từ 3 nguyên tố: H, S, O. Nguyên tố nào có ký hiệu S?",
+    elementAns:["luu huynh","lưu huỳnh","sulfur","s"],
+    reactants:["H₂SO₄","NaOH"], products:["Na₂SO₄","H₂O"],
+    productAns:["na2so4 va h2o","na2so4 & h2o","na2so4, h2o","na2so4 + h2o"],
+    coefs:[1,2,1,2] },
+  { id:"naoh",
+    riddle:["Tôi là bazơ mạnh, dạng rắn.","Tôi hút ẩm, làm mềm vải, sơ mì.","Tôi có tên gọi là xút."],
+    answers:["naoh","xut","xút","natri hidroxit"],
+    elementQ:"NaOH được tạo từ 3 nguyên tố: Na, O, H. Nguyên tố kim loại trong NaOH là gì?",
+    elementAns:["natri","sodium","na"],
+    reactants:["NaOH","CO₂"], products:["Na₂CO₃","H₂O"],
+    productAns:["na2co3 va h2o","na2co3 & h2o","na2co3, h2o","na2co3 + h2o"],
+    coefs:[2,1,1,1] },
+  { id:"caco3",
+    riddle:["Tôi là chất rắn màu trắng.","Tôi có trong vỏ trứng, sò, đá vôi.","Nung tôi thu được vôi sống."],
+    answers:["caco3","canxi cacbonat","da voi","đá vôi"],
+    elementQ:"CaCO₃ được tạo từ 3 nguyên tố: Ca, C, O. Nguyên tố kim loại trong CaCO₃ là gì?",
+    elementAns:["canxi","calcium","ca"],
+    reactants:["CaCO₃"], products:["CaO","CO₂"],
+    productAns:["cao va co2","cao & co2","cao, co2","cao + co2","voi song va co2"],
+    coefs:[1,1,1] },
+  { id:"cao",
+    riddle:["Tôi là chất rắn màu trắng, gọi là vôi sống.","Tôi tác dụng mạnh với nước, tỏa nhiều nhiệt.","Tôi được dùng để khử chua đất."],
+    answers:["cao","voi song","vôi sống","canxi oxit"],
+    elementQ:"CaO được tạo từ hai nguyên tố: Ca và O. Nguyên tố nào là kim loại?",
+    elementAns:["canxi","calcium","ca"],
+    reactants:["CaO","H₂O"], products:["Ca(OH)₂"],
+    productAns:["ca(oh)2","caoh2","voi tinh"],
+    coefs:[1,1,1] },
+  { id:"nacl",
+    riddle:["Tôi là muối ăn hàng ngày.","Tôi là chất rắn màu trắng, vị mặn.","Tôi điện phân ra clo, hidro và xút."],
+    answers:["nacl","muoi an","muối ăn","natri clorua"],
+    elementQ:"NaCl gồm hai nguyên tố: Na và Cl. Nguyên tố nào là phi kim?",
+    elementAns:["clo","clor","cl","chlorine"],
+    reactants:["NaCl","AgNO₃"], products:["AgCl","NaNO₃"],
+    productAns:["agcl va nano3","agcl & nano3","agcl, nano3","agcl + nano3"],
+    coefs:[1,1,1,1] },
+  { id:"kmno4",
+    riddle:["Tôi là chất rắn màu tím đen.","Nung tôi thu được khí giữ màu hoa, duy trì sự cháy.","Tôi là thuốc tím khử trùng."],
+    answers:["kmno4","thuoc tim","thuốc tím","kali pemanganat"],
+    elementQ:"KMnO₄ gồm 3 nguyên tố: K, Mn, O. Nguyên tố nào có tên gọi là mangan?",
+    elementAns:["mangan","manganese","mn"],
+    reactants:["KMnO₄"], products:["K₂MnO₄","MnO₂","O₂"],
+    productAns:["k2mno4 va mno2 va o2","k2mno4, mno2, o2","k2mno4 + mno2 + o2","k2mno4 & mno2 & o2"],
+    coefs:[2,1,1,1] },
+  { id:"mg",
+    riddle:["Tôi là kim loại màu trắng bạc, nhẹ hơn nhôm.","Tôi cháy sáng chói với ngọn lửa trắng.","Dây thép thường có tôi để chống gỉ."],
+    answers:["mg","magie","magnesium"],
+    elementQ:"Mg là ký hiệu hóa học của nguyên tố nào?",
+    elementAns:["magie","magnesium"],
+    reactants:["Mg","O₂"], products:["MgO"],
+    productAns:["mgo","oxit magie"],
+    coefs:[2,1,2] },
+  { id:"c",
+    riddle:["Tôi là phi kim, màu đen.","Tôi là thành phần chính của than, gỗ.","Kim cương là dạng tinh thể của tôi."],
+    answers:["c","cacbon","carbon","than"],
+    elementQ:"C là ký hiệu hóa học của nguyên tố nào?",
+    elementAns:["cacbon","carbon"],
+    reactants:["C","CuO"], products:["Cu","CO₂"],
+    productAns:["cu va co2","cu & co2","cu, co2","cu + co2","dong va co2"],
+    coefs:[1,2,2,1] },
+  { id:"ch4",
+    riddle:["Tôi là chất khí không màu.","Tôi là thành phần chính của khí biogas, khí đốt.","Đốt tôi thu được CO₂ và hơi nước."],
+    answers:["ch4","metan","methane"],
+    elementQ:"CH₄ gồm 2 nguyên tố: C và H. Nguyên tố nào là phi kim có tên cùng nhóm với tên chất?",
+    elementAns:["cacbon","carbon"],
+    reactants:["CH₄","O₂"], products:["CO₂","H₂O"],
+    productAns:["co2 va h2o","co2 & h2o","co2, h2o","co2 + h2o"],
+    coefs:[1,2,1,2] },
+  { id:"nh3",
+    riddle:["Tôi là chất khí mùi khai, xốc.","Tôi tan mạnh trong nước tạo môi trường bazơ.","Dung dịch của tôi dùng lau kính."],
+    answers:["nh3","amoniac","ammonia"],
+    elementQ:"NH₃ gồm 2 nguyên tố: N và H. Nguyên tố N có tên gọi là gì?",
+    elementAns:["nito","nitơ","nitrogen","n"],
+    reactants:["NH₃","O₂"], products:["N₂","H₂O"],
+    productAns:["n2 va h2o","n2 & h2o","n2, h2o","n2 + h2o","nito va h2o"],
+    coefs:[4,3,2,6] },
+  { id:"cuo",
+    riddle:["Tôi là chất rắn màu đen.","Tôi là oxit của kim loại màu đỏ.","Tôi bị khử bởi khí hidro thành kim loại đỏ."],
+    answers:["cuo","oxit dong","đồng oxit","oxit đồng"],
+    elementQ:"CuO gồm 2 nguyên tố: Cu và O. Nguyên tố kim loại trong CuO là gì?",
+    elementAns:["dong","đồng","copper","cu"],
+    reactants:["H₂","CuO"], products:["Cu","H₂O"],
+    productAns:["cu va h2o","cu & h2o","cu, h2o","cu + h2o","dong va h2o"],
+    coefs:[1,1,1,1] }
+];
+
+const TOTAL_ROUNDS = 10;
+let rounds = [], roundIdx = 0, currentStep = 0, score = 0;
+let usedThisStep = false;
+let review = [];
+
+function normalize(str) {
+  return str.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[₀₁₂₃₄₅₆₇₈₉]/g, m => "0123456789"["₀₁₂₃₄₅₆₇₈₉".indexOf(m)])
+    .replace(/₂/g,"2").replace(/₃/g,"3").replace(/₄/g,"4")
+    .replace(/[.,;:!?"'()]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startGame() {
+  rounds = shuffle(BANK).slice(0, TOTAL_ROUNDS);
+  roundIdx = 0; currentStep = 0; score = 0; review = [];
+  updateScore(); updateRound();
+  showScreen("quizScreen");
+  renderStep();
+}
+
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("visible"));
+  document.getElementById(id).classList.add("visible");
+  updateProgress();
+}
+
+function updateScore() {
+  document.getElementById("score").textContent = score;
+}
+function updateRound() {
+  document.getElementById("roundBox").textContent = "📋 Câu " + Math.min(roundIdx + 1, TOTAL_ROUNDS) + "/" + TOTAL_ROUNDS;
+}
+
+function updateProgress() {
+  document.querySelectorAll(".step").forEach((el, i) => {
+    el.classList.remove("active", "done");
+    if (i < currentStep) el.classList.add("done");
+    else if (i === currentStep) el.classList.add("active");
+  });
+}
+
+function currentSubstance() { return rounds[roundIdx]; }
+
+function buildEquation(sub) {
+  return sub.reactants.join(" + ") + " → " + sub.products.join(" + ");
+}
+
+function renderStep() {
+  const sub = currentSubstance();
+  usedThisStep = false;
+  const fb = document.getElementById("feedback");
+  fb.textContent = ""; fb.className = "feedback";
+  const inputRow = document.getElementById("inputRow");
+  const dynamicArea = document.getElementById("dynamicArea");
+  const coefRow = document.getElementById("coefRow");
+  dynamicArea.innerHTML = ""; coefRow.innerHTML = "";
+  inputRow.style.display = "flex";
+
+  if (currentStep === 0) {
+    document.getElementById("stepLabel").textContent = "🧪 BƯỚC 1 — ĐOÁN CHẤT";
+    document.getElementById("questionText").textContent = "Đọc các manh mối và đoán chất:";
+    dynamicArea.innerHTML = '<div class="riddle">' + sub.riddle.map(l => "🔹 " + l).join("<br>") + "</div>";
+    setInputPlaceholder("Nhập tên hoặc công thức hóa học...");
+  } else if (currentStep === 1) {
+    document.getElementById("stepLabel").textContent = "⚛️ BƯỚC 2 — ĐOÁN NGUYÊN TỐ";
+    document.getElementById("questionText").textContent = sub.elementQ;
+    setInputPlaceholder("Nhập tên nguyên tố...");
+  } else if (currentStep === 2) {
+    document.getElementById("stepLabel").textContent = "⚗️ BƯỚC 3 — ĐOÁN PHẢN ỨNG";
+    document.getElementById("questionText").textContent = "Sản phẩm của phản ứng sau là gì?";
+    dynamicArea.innerHTML = '<div class="equation">' + sub.reactants.join(" + ") + " → ?</div>";
+    setInputPlaceholder("Nhập sản phẩm (vd: CO₂)...");
+  } else {
+    document.getElementById("stepLabel").textContent = "⚖️ BƯỚC 4 — CÂN BẰNG PTHH";
+    document.getElementById("questionText").textContent = "Nhập các hệ số để cân bằng phương trình:";
+    dynamicArea.innerHTML = '<div class="equation">' + buildEquation(sub) + "</div>";
+    inputRow.style.display = "none";
+    const species = [...sub.reactants, "→", ...sub.products];
+    let idx = 0, html = "";
+    species.forEach(sp => {
+      if (sp === "→") { html += '<span class="coef-arrow">→</span>'; }
+      else {
+        html += '<input type="text" class="coef-input" id="coef' + idx + '" maxlength="2" placeholder="?" onkeydown="if(event.key===\'Enter\') submitAnswer()"> ' + sp + ' ';
+        idx++;
+      }
+    });
+    coefRow.innerHTML = '<div class="coef-row">' + html + '</div><button class="btn" onclick="submitAnswer()">KIỂM TRA</button>';
+    setTimeout(() => { const el = document.getElementById("coef0"); if (el) el.focus(); }, 50);
+  }
+  updateProgress();
+  if (currentStep < 3) document.getElementById("answerInput").focus();
+}
+
+function setInputPlaceholder(t) {
+  document.getElementById("answerInput").value = "";
+  document.getElementById("answerInput").placeholder = t;
+}
+
+function submitAnswer() {
+  if (usedThisStep) return;
+  const sub = currentSubstance();
+  let correct = false;
+
+  if (currentStep === 0) {
+    const ans = normalize(document.getElementById("answerInput").value);
+    correct = sub.answers.some(a => normalize(a) === ans);
+  } else if (currentStep === 1) {
+    const ans = normalize(document.getElementById("answerInput").value);
+    correct = sub.elementAns.some(a => normalize(a) === ans);
+  } else if (currentStep === 2) {
+    const ans = normalize(document.getElementById("answerInput").value);
+    correct = sub.productAns.some(a => normalize(a) === ans);
+  } else {
+    const speciesCount = sub.reactants.length + sub.products.length;
+    correct = true;
+    for (let i = 0; i < speciesCount; i++) {
+      const el = document.getElementById("coef" + i);
+      const v = parseInt(el.value);
+      if (isNaN(v) || v !== sub.coefs[i]) { correct = false; el.classList.add("shake"); setTimeout(() => el.classList.remove("shake"), 400); }
+    }
+  }
+
+  const fb = document.getElementById("feedback");
+  const scoreBox = document.getElementById("scoreBox");
+
+  if (correct) {
+    usedThisStep = true;
+    score += 1;
+    updateScore();
+    scoreBox.classList.remove("bump-down");
+    scoreBox.classList.add("bump-up");
+    fb.textContent = "✅ Đúng → +1 điểm!";
+    fb.className = "feedback correct";
+    if (currentStep === 3) {
+      review.push("<b>Câu " + (roundIdx + 1) + ":</b> " + buildEquation(sub) + " &nbsp;|&nbsp; Hệ số: <b>" + sub.coefs.join(", ") + "</b>");
+    }
+    setTimeout(() => {
+      scoreBox.classList.remove("bump-up");
+      currentStep++;
+      if (currentStep > 3) {
+        roundIdx++;
+        if (roundIdx >= TOTAL_ROUNDS) endGame();
+        else { currentStep = 0; updateRound(); renderStep(); }
+      } else renderStep();
+    }, 900);
+  } else {
+    score -= 1;
+    updateScore();
+    scoreBox.classList.remove("bump-up");
+    scoreBox.classList.add("bump-down");
+    fb.textContent = "❌ Sai → −1 điểm. Thử lại nhé!";
+    fb.className = "feedback wrong";
+    if (currentStep < 3) {
+      const input = document.getElementById("answerInput");
+      input.classList.add("shake");
+      setTimeout(() => input.classList.remove("shake"), 400);
+      input.select();
+    }
+    setTimeout(() => scoreBox.classList.remove("bump-down"), 400);
+  }
+}
+
+function endGame() {
+  updateRound();
+  document.getElementById("finalScore").textContent = score + " / 40";
+  const msg = score >= 36 ? "🌟 XUẤT SẮC! Bạn là bậc thầy Hóa học!"
+            : score >= 28 ? "🏆 Rất giỏi! Kiến thức vững vàng!"
+            : score >= 20 ? "👍 Khá tốt! Cố lên!"
+            : score >= 10 ? "📖 Khá ổn, ôn thêm nhé!"
+            : "💪 Đừng bỏ cuộc, thử lại ngay nào!";
+  document.getElementById("finalMessage").textContent = msg;
+  document.getElementById("answerReveal").innerHTML =
+    "📖 Ôn lại các phương trình trong ván này:<br>" + review.join("<br>");
+  showScreen("endScreen");
+}
+</script>
+</body>
+</html>
